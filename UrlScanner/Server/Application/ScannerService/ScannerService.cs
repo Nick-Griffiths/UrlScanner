@@ -22,6 +22,8 @@ namespace UrlScanner.Server.Application.ScannerService
 
         protected override async Task ExecuteAsync(CancellationToken stopToken)
         {
+            await Yield();
+            
             while(!stopToken.IsCancellationRequested)
             {
                 if (_options.CurrentValue.ExecutionIsEnabled)

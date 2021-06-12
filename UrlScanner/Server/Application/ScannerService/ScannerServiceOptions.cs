@@ -7,5 +7,6 @@ namespace UrlScanner.Server.Application.ScannerService
     {
         public bool ExecutionIsEnabled { get; set; }
         public int ExecutionIntervalInMilliseconds { get; set; }
+        public bool UseEventBus { get; set; }
     }
 }

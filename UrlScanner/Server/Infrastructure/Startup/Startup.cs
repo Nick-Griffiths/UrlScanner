@@ -8,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
-using UrlScanner.Server.Application.Pipelining;
 using UrlScanner.Server.Application.Pipelining.Pipelines;
 using UrlScanner.Server.Application.ScannerService;
 using UrlScanner.Server.Application.UrlLoading;
@@ -17,6 +16,7 @@ using UrlScanner.Server.Application.UrlProcessing.Decorators;
 using UrlScanner.Server.Application.UrlProcessing.Scanners;
 using UrlScanner.Server.Infrastructure.CsvParsing;
 using UrlScanner.Server.Infrastructure.DataAccess;
+using UrlScanner.Server.Infrastructure.Email;
 using static System.Reflection.Assembly;
 
 namespace UrlScanner.Server.Infrastructure.Startup
@@ -38,6 +38,7 @@ namespace UrlScanner.Server.Infrastructure.Startup
             services.Configure<ScannerServiceOptions>(Config.GetSection(nameof(ScannerServiceOptions)));
             services.Configure<PipelineOptions>(Config.GetSection(nameof(PipelineOptions)));
             services.Configure<ScannerOptions>(Config.GetSection(nameof(ScannerOptions)));
+            services.Configure<EmailOptions>(Config.GetSection(nameof(EmailOptions)));
 
             services.AddControllers(o =>
             {
@@ -50,13 +51,12 @@ namespace UrlScanner.Server.Infrastructure.Startup
             services.AddHttpClient<IUrlLoader, UrlLoader>();
         }
 
-        public static void ConfigureContainer(ContainerBuilder builder)
+        public void ConfigureContainer(ContainerBuilder builder)
         {
             builder.RegisterPipeline();
-            builder.RegisterType<EfCoreUrlInfoProviderConsumer>()
-                .InstancePerLifetimeScope()
-                .AsImplementedInterfaces()
-                .UsingAnyConstructor();
+            builder.RegisterPipelineProvidersAndConsumers();
+
+            builder.RegisterEventBusAndHandlers(Config);
 
             builder.RegisterType<UrlProcessor>()
                 .InstancePerLifetimeScope()
@@ -66,6 +66,11 @@ namespace UrlScanner.Server.Infrastructure.Startup
             
             builder.RegisterAssemblyTypes(GetExecutingAssembly())
                 .Where(t => typeof(IUrlScanner).IsAssignableFrom(t))
+                .SingleInstance()
+                .AsImplementedInterfaces()
+                .UsingAnyConstructor();
+            
+            builder.RegisterType<EmailService>()
                 .SingleInstance()
                 .AsImplementedInterfaces()
                 .UsingAnyConstructor();
@@ -96,6 +101,8 @@ namespace UrlScanner.Server.Infrastructure.Startup
 
                 if (env.IsDevelopment()) spa.UseReactDevelopmentServer(npmScript: "start");
             });
+
+            app.ConfigureEventBus();
         }
     }
 }

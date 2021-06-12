@@ -9,6 +9,6 @@ namespace UrlScanner.Server.Infrastructure.Extensions
         {
             var index = 0;
             foreach (var element in source) action(element, index++);
-        } 
+        }
     }
 }

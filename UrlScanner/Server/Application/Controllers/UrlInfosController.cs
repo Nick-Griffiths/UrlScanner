@@ -19,12 +19,12 @@ namespace UrlScanner.Server.Application.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var results = await _db.UrlInfos.AsNoTracking()
+            var infos = await _db.UrlInfos.AsNoTracking()
                 .OrderBy(w => w.ScanDuration)
                 .Select(w => w.ToViewModel())
                 .ToArrayAsync();
             
-            return Ok(results);
+            return Ok(infos);
         }
         
         [HttpGet("lastFullScan")]
